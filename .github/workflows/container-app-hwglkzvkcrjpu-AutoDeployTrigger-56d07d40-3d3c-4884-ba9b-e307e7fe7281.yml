@@ -1,0 +1,47 @@
+name: Trigger auto deployment for container-app-hwglkzvkcrjpu
+
+# When this action will be executed
+on:
+  # Automatically trigger it when detected changes in repo
+  push:
+    branches: 
+      [ main ]
+    paths:
+    - 'check-storage-usage/**'
+    - '.github/workflows/container-app-hwglkzvkcrjpu-AutoDeployTrigger-56d07d40-3d3c-4884-ba9b-e307e7fe7281.yml'
+
+  # Allow manual trigger 
+  workflow_dispatch:      
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions: 
+      id-token: write #This is required for requesting the OIDC JWT Token
+      contents: read #Required when GH token is used to authenticate with private repo
+
+    steps:
+      - name: Checkout to the branch
+        uses: actions/checkout@v2
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.CONTAINERAPPHWGLKZVKCRJPU_AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.CONTAINERAPPHWGLKZVKCRJPU_AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.CONTAINERAPPHWGLKZVKCRJPU_AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build and push container image to registry
+        uses: azure/container-apps-deploy-action@v2
+        with:
+          appSourcePath: ${{ github.workspace }}/check-storage-usage 
+          registryUrl: 
+          registryUsername: ${{ secrets.CONTAINERAPPHWGLKZVKCRJPU_REGISTRY_USERNAME }}
+          registryPassword: ${{ secrets.CONTAINERAPPHWGLKZVKCRJPU_REGISTRY_PASSWORD }}
+          containerAppName: container-app-hwglkzvkcrjpu
+          resourceGroup: azuresearchdotnetsamples9f9b
+          imageToBuild: default/container-app-hwglkzvkcrjpu:${{ github.sha }}
+          _buildArgumentsKey_: |
+            _buildArgumentsValues_
+
+
